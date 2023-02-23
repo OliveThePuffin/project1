@@ -122,7 +122,7 @@ struct cache_line *cache_system_find_cache_line(struct cache_system *cache_syste
 	// from index*associativity
 	// to (index+1)*associativity
 	for (
-			int i = set_idx * cache_system->associativity;
+			uint32_t i = set_idx * cache_system->associativity;
 			i < (set_idx+1) * cache_system->associativity;
 			i++) {
 		if (cache_system->cache_lines[i].tag == tag)

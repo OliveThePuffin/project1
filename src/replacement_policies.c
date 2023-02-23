@@ -18,24 +18,52 @@
 // ============================================================================
 // TODO feel free to create additional structs/enums as necessary
 
+struct lru_data {
+	uint32_t num_lines;
+	uint32_t current_time;
+	uint32_t *access_times;
+};
+
 void lru_cache_access(struct replacement_policy *replacement_policy,
                       struct cache_system *cache_system, uint32_t set_idx, uint32_t tag)
 {
-    // TODO update the LRU replacement policy state given a new memory access
+	struct lru_data *data = (struct lru_data *)replacement_policy->data;
+	data->current_time++;
+	for (
+			uint32_t i = set_idx * cache_system->associativity;
+			i < (set_idx+1) * cache_system->associativity;
+			i++) {
+		if (cache_system->cache_lines[i].tag == tag) {
+			data->access_times[i] = data->current_time;
+			break;
+		}
+	}
 }
 
 uint32_t lru_eviction_index(struct replacement_policy *replacement_policy,
                             struct cache_system *cache_system, uint32_t set_idx)
 {
-    // TODO return the index within the set that should be evicted.
+	struct lru_data *data = (struct lru_data *)replacement_policy->data;
 
-    return 0;
+	uint32_t index;
+	uint32_t min_time = -1;
+	for (
+			uint32_t i = set_idx * cache_system->associativity;
+			i < (set_idx+1) * cache_system->associativity;
+			i++) {
+		if (data->access_times[i] < min_time) {
+			min_time = data->access_times[i];
+			index = i;
+		}
+	}
+    return index % cache_system->associativity;
 }
 
 void lru_replacement_policy_cleanup(struct replacement_policy *replacement_policy)
 {
-    // TODO cleanup any additional memory that you allocated in the
-    // lru_replacement_policy_new function.
+	free(((struct lru_data *)replacement_policy->data)->access_times);
+	free(replacement_policy->data);
+
 }
 
 struct replacement_policy *lru_replacement_policy_new(uint32_t sets, uint32_t associativity)
@@ -45,8 +73,10 @@ struct replacement_policy *lru_replacement_policy_new(uint32_t sets, uint32_t as
     lru_rp->eviction_index = &lru_eviction_index;
     lru_rp->cleanup = &lru_replacement_policy_cleanup;
 
-    // TODO allocate any additional memory to store metadata here and assign to
-    // lru_rp->data.
+	struct lru_data *data = calloc(1, sizeof(struct lru_data));
+	data->num_lines = sets * associativity;
+	data->access_times = calloc(data->num_lines, sizeof(uint32_t));
+    lru_rp->data = data;
 
     return lru_rp;
 }
