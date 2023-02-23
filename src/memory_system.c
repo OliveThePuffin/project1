@@ -14,10 +14,9 @@ struct cache_system *cache_system_new(uint32_t line_size, uint32_t sets, uint32_
     struct cache_system_stats stats = {0, 0, 0, 0};
     cs->stats = stats;
 
-    // TODO: calculate the index bits, offset bits and tag bits.
-    cs->index_bits = 0;
-    cs->offset_bits = 0;
-    cs->tag_bits = 0;
+    cs->index_bits = log2(sets);
+    cs->offset_bits = log2(line_size);
+    cs->tag_bits = 32 - cs->index_bits - cs->offset_bits;
 
     cs->offset_mask = 0xffffffff >> (32 - cs->offset_bits);
     cs->set_index_mask = 0xffffffff >> cs->tag_bits;
